@@ -1,0 +1,331 @@
+import java.io.*;
+
+public class Tic_tac_toe {
+
+    static int h[] = new int[5];
+    static int c[] = new int[5];
+    static int arr[][] = new int[3][3];
+    static String board[][] = new String[3][3];
+    static int x = 0;
+    static int y = 0;
+    static int row = 0;
+    static int col = 0;
+    static BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+
+    public static int[][] generate_magic(int n) { // the function returns a 2D magic square
+        int arr[][] = new int[n][n];//n is the order of the matrix
+        int v = 1;
+        int i = n / 2, j = n - 1;
+
+        arr[i][j] = v;
+
+        while (v != (n * n)) {
+            v++;
+
+            if (v % n == 1) {
+                if ((j - 1) < 0) {
+                    j = n - 1;
+                } else {
+                    j = j - 1;
+                }
+                arr[i][j] = v;
+            } else {
+                if ((i - 1) >= 0) {
+                    i = i - 1;
+                } else {
+                    i = n - 1;
+                }
+                if ((j + 1) < n) {
+                    j = j + 1;
+                } else {
+                    j = 0;
+                }
+                arr[i][j] = v;
+            }
+
+        }
+
+        return arr;// the magic square is returned as a 2D array
+
+    }
+
+    public static void moveh(char hsign) throws IOException {
+        //this function takes the character assigned as input to the user and asks him to play his turn
+        System.out.println("Your turn");
+        System.out.println("Enter a valid position 1-9");
+        int pos = Integer.parseInt(br.readLine());
+        boolean flag = false;
+        if ((hsearch(arr[(pos - 1) / 3][(pos - 1) % 3]) != -1) || (csearch(arr[(pos - 1) / 3][(pos - 1) % 3]) != -1)) {//converts 1D array into 2D and check whether the position is available or not
+         
+            System.out.println("Not a valid position, enter another position");//enter a new position if the current position is already taken
+            flag = true;
+        } else {//if the position is available then enter the character assigned to the array
+            h[x++] = arr[(pos - 1) / 3][(pos - 1) % 3];//x keeps the count of the number of turns played by the human
+            board[(pos - 1) / 3][(pos - 1) % 3] = hsign + "";//the  character is assigned at the particular position
+            display();//displays the current updated board
+        }
+        if (flag == true) {
+            moveh(hsign);
+        }
+        if(x>2){//if more than 2 chances have been played by human, then check for the winning position and block the position if it is available
+           
+            boolean res= checkwin(h,x);
+            if(res==true){
+                System.out.println("You win");//if the winning position is already filled, then human wins
+                System.exit(0);
+            }
+        }
+    }
+
+    public static void movec(char csign) {
+        //this function takes the character assigned as input to the computer and it plays its turn
+        System.out.println("Computer's turn");
+        if (y == 0) {
+            if (hsearch(arr[(5 - 1) / 3][(5 - 1) % 3]) == -1 && csearch(arr[(5 - 1) / 3][(5 - 1) % 3]) == -1) {//converting 1D array to 2D
+                c[y++] = arr[(5 - 1) / 3][(5 - 1) % 3];//y keeps the count of the moves played by computer
+                board[(5 - 1) / 3][(5 - 1) % 3] = csign + "";//if position 5 is empty fill that, else fill position 3 first
+                display();//displays the current updated position of the board
+            } else {//if position 5 and 3 are filled go to position 1
+                c[y++] = arr[(1 - 1) / 3][(1 - 1) % 3];
+                board[(1 - 1) / 3][(1 - 1) % 3] = csign + "";
+                display();
+            }
+        } else if (x == 2 && y == 1) {//human has played 2 chances and computer has played only one, it needs to check the winning position of human and blocks it
+
+            int k = posswin(h, x);
+            if (k == -1) {
+
+                k = make();//if the position is already blocked try for non-corner positions and then for corner ones
+                c[y++] = arr[(k - 1) / 3][(k - 1) % 3];
+                board[(k - 1) / 3][(k - 1) % 3] = csign + "";
+                display();//display the current updated position of the board
+            } else {
+                c[y++] = k;
+                location(k);
+                board[row][col] = csign + "";//assign the character to the required position on the board
+                display();
+            }
+
+        } else if (x == 1 && y == 1) {//if both have played only one chance each, then try for 9th position else 3rd on the board
+            if (hsearch(arr[(9 - 1) / 3][(9 - 1) % 3]) == -1 && csearch(arr[(9 - 1) / 3][(9 - 1) % 3]) == -1) {
+                c[y++] = arr[(9 - 1) / 3][(9 - 1) % 3];
+                board[(9 - 1) / 3][(9 - 1) % 3] = csign + "";
+                display();
+            } else {
+                c[y++] = arr[(3 - 1) / 3][(3 - 1) % 3];
+                board[(3 - 1) / 3][(3 - 1) % 3] = csign + "";
+                display();
+            }
+            //again check the possibility of winning of other player, block the position else choose non-corner positions first and then go for corner ones
+        } else {
+            int k = posswin(c, y);
+            if (k != -1) {
+                c[y++] = k;
+                location(k);
+                board[row][col] = csign + "";
+                display();
+            } else {
+                k = posswin(h, x);
+                if (k != -1) {
+                    c[y++] = k;
+                    location(k);
+                    board[row][col] = csign + "";
+                    display();
+                } else {
+                    k = make();
+                    c[y++] = arr[(k - 1) / 3][(k - 1) % 3];
+                    board[(k - 1) / 3][(k - 1) % 3] = csign + "";
+                    display();
+                }
+            }
+
+        }
+if(y>2){//if computer has played more than 2 chances, check the possibility of winning
+            boolean res= checkwin(c,y);
+            if(res==true){
+                System.out.println("Computer wins");
+                System.exit(0);
+            }
+        }
+    }
+
+    public static int hsearch(int p) {
+        int i;//searches for the availability of the position opted by the user
+        for (i = 0; i < x; i++) {
+            if (p == h[i]) {
+                return i;//if position is available return its value, else return -1
+            }
+        }
+
+        return -1;
+
+    }
+
+    public static int csearch(int p) {
+        int i;//searches for the availability of the position opted by the computer
+        for (i = 0; i < y; i++) {
+            if (p == c[i]) {
+                return i;//if position is available return its value, else return -1
+            }
+        }
+
+        return -1;
+
+    }
+
+    public static int posswin(int a[], int z) {
+        int l = z;
+        int i, d = 0;
+        for (i = 0; i < l-1; i++) {
+            d = 15 - a[i] - a[l - 1];
+            if (d > 0 && d <= 9 && hsearch(d) == -1 && csearch(d) == -1) {//Takes as input a list of moves and the number of elements in the list and returns the position that will produce a win for that player
+
+                return d;
+            }
+        }
+
+        return -1;
+    }
+
+    public static int make() {//this function returns a non-corner position if it is available, otherwise returns an available corner position
+        if (csearch(arr[(2 - 1) / 3][(2 - 1) % 3]) == -1 && hsearch(arr[(2 - 1) / 3][(2 - 1) % 3]) == -1) {
+            return 2;
+        } else if (csearch(arr[(8 - 1) / 3][(8 - 1) % 3]) == -1 && hsearch(arr[(8 - 1) / 3][(8 - 1) % 3]) == -1) {
+            return 8;
+        } else if (csearch(arr[(4 - 1) / 3][(4 - 1) % 3]) == -1 && hsearch(arr[(4 - 1) / 3][(4 - 1) % 3]) == -1) {
+            return 4;
+        } else if (csearch(arr[(6 - 1) / 3][(6 - 1) % 3]) == -1 && hsearch(arr[(6 - 1) / 3][(6 - 1) % 3]) == -1) {
+            return 6;
+        }
+        else if (csearch(arr[(1 - 1) / 3][(1 - 1) % 3]) == -1 && hsearch(arr[(1 - 1) / 3][(1 - 1) % 3]) == -1) {
+            return 1;
+        }
+        else if (csearch(arr[(3 - 1) / 3][(3 - 1) % 3]) == -1 && hsearch(arr[(3 - 1) / 3][(3 - 1) % 3]) == -1) {
+            return 3;
+        }
+        else if (csearch(arr[(9 - 1) / 3][(9 - 1) % 3]) == -1 && hsearch(arr[(9 - 1) / 3][(9 - 1) % 3]) == -1) {
+            return 9;
+        }
+        else if (csearch(arr[(7 - 1) / 3][(7 - 1) % 3]) == -1 && hsearch(arr[(7 - 1) / 3][(7 - 1) % 3]) == -1) {
+            return 7;
+        }
+            else {
+            return -1;
+        }
+    }
+
+    public static void location(int v) {
+        int i, j;//v is an input of magic square, this function updates variables row and col with the position of that number in the generated magic square matrix
+        for (i = 0; i < 3; i++) {
+            for (j = 0; j < 3; j++) {
+                if (arr[i][j] == v) {
+                    row = i;
+                    col = j;
+                }
+
+            }
+        }
+    }
+   
+    public static boolean checkwin(int a[],int z){
+        int i,j,k ;
+        int sum=0;
+        for(i=0;i<z-2;i++)
+            for(j=i+1;j<z-1;j++)
+                for(k=j+1;k<z;k++){
+                   
+                    sum=a[i]+a[j]+a[k];//makes all possible triplets of the list and checks whether the sum of the triplet is equal to 15, if yes then the player wins
+                    if(sum==15)
+                        return true;
+    }
+        return false;
+    }
+   
+     public static void display() {//displaying the updated tic-tac-toe board
+        int i, j;
+        for (i = 0; i < 3; i++) {
+           
+            for (j = 0; j < 3; j++) {
+                if(j==0||j==1)
+                System.out.print(board[i][j] + " | ");
+                else
+                  System.out.print(board[i][j] + "   ");  
+            }
+            if(i==0||i==1)
+               
+            System.out.println();
+            if(i==0||i==1)
+            System.out.println("-- --- --");
+        }
+        //specifies the chances alternatively( for human and computer)
+        System.out.println("\n\n");
+        System.out.println("Your list of moves");
+        for(i=0;i<x;i++)
+        System.out.print(h[i]+" ");
+        System.out.println("\n\n");
+        System.out.println("Computer's list of moves");
+         for(i=0;i<y;i++)
+        System.out.print(c[i]+" ");
+         System.out.println("\n\n");
+    }
+
+    public static void main(String args[]) throws IOException {
+
+
+        int n = 3;
+        arr = generate_magic(n);
+        int i, j;
+        System.out.println("The generated 3x3 Magic Square is:");
+        for (i = 0; i < n; i++) {
+            for (j = 0; j < n; j++) {
+                System.out.print(arr[i][j] + " ");
+            }
+            System.out.println();//generated 2D array of the magic square
+
+        }
+       
+        System.out.println("\n\nThe board positions are as follows:");
+        for (i = 0; i < n; i++) {
+            for (j = 0; j < n; j++) {
+                board[i][j] = " ";//generates the empty board
+            }
+        }
+        int num=1;
+         for (i = 0; i < 3; i++) {
+           
+            for (j = 0; j < 3; j++) {
+                if(j==0||j==1)
+                System.out.print((num++) + " | ");
+                else
+                  System.out.print((num++) + "   ");  
+            }
+            if(i==0||i==1)
+               
+            System.out.println();
+            if(i==0||i==1)
+            System.out.println("-- --- --");
+        }
+        System.out.println("\n\n");
+        System.out.println("Do you want to play first? \n 0-Yes\n 1-No");
+        int ch = Integer.parseInt(br.readLine());//asks the user if he/she wants to play first or not
+        int m;
+        char hsym, csym;
+        if (ch == 0) {
+            hsym = 'X';//assign characters corresponding to the choice of the user
+            csym = 'O';
+        } else {
+            hsym = 'O';
+            csym = 'X';
+        }
+        for (m = 1; m <= 9; m++) {
+            if (m % 2 == ch) {//for each position of the board gives the alternative chance to both user and computer
+                movec(csym);
+            } else {
+                moveh(hsym);
+            }
+        }
+        System.out.println("Match is a draw ");
+    }
+
+   
+}
